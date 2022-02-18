@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Controllers\PostController;
+use App\Repository\ServiceInterface;
+use App\Services\PostService;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -23,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
+        $this->app->when(PostController::class)
+            ->needs(ServiceInterface::class)
+            ->give(PostService::class);
     }
 }

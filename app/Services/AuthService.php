@@ -5,11 +5,9 @@ namespace App\Services;
 
 
 use App\Jobs\SendRegistrationEmail;
-use App\Mail\RegistrationMail;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class AuthService
@@ -22,6 +20,12 @@ class AuthService
                 : auth()->attempt(['email' => $data['email'], 'password' => $data['password']]);
         } elseif (is_null($data['email'])) {
             $auth = auth()->attempt(['phone' => $data['phone'], 'password' => $data['password']]);
+        }
+
+        if (auth()->user() && is_null(auth()->user()->email_verified_at)) {
+            $this->logout();
+
+            return false;
         }
 
         return $auth;
@@ -55,11 +59,33 @@ class AuthService
 
     public function getUser(array $data)
     {
-        $user = $data['email'] && !is_numeric($data['email'])
-            ? User::query()->whereEmail($data['email'])->first()
-            : User::query()->wherePhone($data['email'])->first();
+        if (!empty($data['email'])) {
+            $user = !is_numeric($data['email'])
+                ? User::query()->whereEmail($data['email'])->first()
+                : User::query()->wherePhone($data['email'])->first();
+        }
+
+        if (!empty($data['token'])) {
+            $user = User::query()->whereVerifyToken($data['token'])->first();
+        }
 
         return $user;
+    }
+
+    public function verify(User $user)
+    {
+        try {
+            DB::beginTransaction();
+            $user->query()
+                ->update([
+                    'verify_token' => null,
+                    'email_verified_at' => Carbon::now()
+                ]);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $e->getMessage();
+        }
     }
 
     public function logout()

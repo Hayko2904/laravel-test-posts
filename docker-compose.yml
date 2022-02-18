@@ -41,6 +41,7 @@ services:
         container_name: laravel-test-nginx
         restart: unless-stopped
         ports:
+            - 80:80
             - 8000:80
         volumes:
             - ./:/var/www

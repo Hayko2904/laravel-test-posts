@@ -12,8 +12,9 @@ use Illuminate\Support\Facades\Route;
 | contains the "web" middleware group. Now create something great!
 |
 */
+Route::get('/', 'PostController@index')->name('home');
 
-Route::get('/', function () {
+Route::get('/login', function () {
     if (auth()->user()) {
         auth()->logout();
     }
@@ -34,6 +35,15 @@ Route::prefix('auth')->as('auth.')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/home', 'HomeController@index')->name('home');
     Route::get('/logout', 'AuthController@logout')->name('logout');
+    Route::prefix('post')->as('post.')->group(function () {
+        Route::get('/edit/{id}', 'PostController@edit')->name('edit');
+        Route::post('/update/{id}', 'PostController@update')->name('update');
+        Route::get('/delete/{id}', 'PostController@delete')->name('delete');
+    });
+    Route::prefix('admin')->as('admin.')->group(function () {
+        Route::get('/users', 'UserController@index')->name('users');
+    });
+    Route::post('/upload/{id}', 'UserController@upload')->name('upload');
+    Route::get('/profile', 'UserController@profile')->name('profile');
 });
